@@ -1,0 +1,24 @@
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="copyImg.png" type="Manipulator">
+	<name>Copy Image</name>
+	<shortDescription>
+		This node is a shows how an image is copied with KNIME Image Processing.
+	</shortDescription>
+
+	<fullDescription>
+		<intro>
+			This node is a shows how an image is copied with KNIME Image Processing.
+			
+			Note: This node just creates a copy.
+		</intro>
+		<tab name="Options">
+			<option name="Labeling">The image column.</option>
+		</tab>
+
+	</fullDescription>
+
+	<ports>
+		<inPort index="0" name="Input Images">Input Image</inPort>
+		<outPort index="0" name="Copy">Input Image Copy.</outPort>
+	</ports>
+</knimeNode>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+<plugin>
+   <extension
+         point="org.knime.workbench.repository.categories">
+      <category
+            icon="icons/course.png"
+            level-id="course"
+            name="Course"
+            path="/community/knip">
+      </category>
+   </extension>
+   <extension
+         point="org.knime.workbench.repository.nodes">
+      <node
+            category-path="/community/knip/course/"
+            deprecated="false"
+            factory-class="de.csbd.segmentation.node.minmaxradius.MinMaxRadiusNodeFactory">
+      </node>
+      <node
+            category-path="/community/knip/course/"
+            deprecated="false"
+            factory-class="de.csbd.segmentation.node.copyimg.CopyImgNodeFactory">
+      </node>
+   </extension>
+
+   
+</plugin>
