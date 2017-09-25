@@ -5,20 +5,20 @@
          point="org.knime.workbench.repository.categories">
       <category
             icon="icons/course.png"
-            level-id="course"
-            name="Course"
-            path="/community/knip">
+            level-id="segmentation"
+            name="Segmentation"
+            path="/community/">
       </category>
    </extension>
    <extension
          point="org.knime.workbench.repository.nodes">
       <node
-            category-path="/community/knip/course/"
+            category-path="/community/segmentation"
             deprecated="false"
             factory-class="de.csbd.segmentation.node.minmaxradius.MinMaxRadiusNodeFactory">
       </node>
       <node
-            category-path="/community/knip/course/"
+            category-path="/community/segmentation"
             deprecated="false"
             factory-class="de.csbd.segmentation.node.copyimg.CopyImgNodeFactory">
       </node>
