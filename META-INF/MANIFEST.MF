@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: KNIME Image Processing - Course Nodes
+Bundle-Name: ImgLib2 Trainable Segmentation
 Bundle-SymbolicName: de.csbd.segmentation;singleton:=true
-Bundle-Version: 0.0.1.qualifier
-Bundle-Vendor: University of Konstanz
+Bundle-Version: 0.0.1.snapshot
+Bundle-Vendor: CSBD
 Require-Bundle: org.knime.knip.base;bundle-version="1.5.0",
  scijava-common;bundle-version="2.47.0",
  imagej-common;bundle-version="0.18.0",
