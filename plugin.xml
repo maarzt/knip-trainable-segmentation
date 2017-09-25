@@ -15,12 +15,7 @@
       <node
             category-path="/community/segmentation"
             deprecated="false"
-            factory-class="de.csbd.segmentation.node.minmaxradius.MinMaxRadiusNodeFactory">
-      </node>
-      <node
-            category-path="/community/segmentation"
-            deprecated="false"
-            factory-class="de.csbd.segmentation.node.copyimg.CopyImgNodeFactory">
+            factory-class="de.csbd.segmentation.node.segmenter.SegmenterNodeFactory">
       </node>
    </extension>
 

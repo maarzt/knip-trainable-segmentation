@@ -46,7 +46,7 @@
  * --------------------------------------------------------------------- *
  *
  */
-package de.csbd.segmentation.node.copyimg;
+package de.csbd.segmentation.node.segmenter;
 
 import java.io.File;
 import java.io.IOException;
@@ -84,7 +84,7 @@ import net.imglib2.type.numeric.RealType;
  * 
  * @author Tim-Oliver Buchholz, University of Konstanz
  */
-public class CopyImgNodeModel<T extends RealType<T>, O extends RealType<O>> extends NodeModel {
+public class SegmenterNodeModel<T extends RealType<T>, O extends RealType<O>> extends NodeModel {
 
 	/**
 	 * Settings model of the column selection.
@@ -108,7 +108,7 @@ public class CopyImgNodeModel<T extends RealType<T>, O extends RealType<O>> exte
 	/**
 	 * Constructor of the MinMaxRadiusNodeModel.
 	 */
-	protected CopyImgNodeModel() {
+	protected SegmenterNodeModel() {
 		super(1, 1);
 	}
 

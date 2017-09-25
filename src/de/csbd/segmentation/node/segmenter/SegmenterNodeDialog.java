@@ -1,7 +1,7 @@
 /*
  * ------------------------------------------------------------------------
  *
- *  Copyright (C) 2003 - 2013
+ *  Copyright (C) 2003 - 2017
  *  University of Konstanz, Germany and
  *  KNIME GmbH, Konstanz, Germany
  *  Website: http://www.knime.org; Email: contact@knime.org
@@ -46,66 +46,25 @@
  * --------------------------------------------------------------------- *
  *
  */
-package de.csbd.segmentation.node.copyimg;
+package de.csbd.segmentation.node.segmenter;
 
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
+import org.knime.knip.base.data.img.ImgPlusValue;
 
 import net.imglib2.type.numeric.RealType;
 
 /**
- *CopyImgsNodeFactory.
+ * CopyImgNodeDialog.
  * 
  * @author Tim-Oliver Buchholz, University of Konstanz
  */
-public class CopyImgNodeFactory<T extends RealType<T>, O extends RealType<O>>
-		extends NodeFactory<CopyImgNodeModel<T, O>> {
+public class SegmenterNodeDialog<T extends RealType<T>> extends DefaultNodeSettingsPane {
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	protected int getNrNodeViews() {
-		// Number of views this node has.
-		return 0;
+	@SuppressWarnings("unchecked")
+	public SegmenterNodeDialog() {
+		super();
+		addDialogComponent(new DialogComponentColumnNameSelection(SegmenterNodeModel.createColumnSelection(),
+				"Labeling", 0, ImgPlusValue.class));
 	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public NodeView<CopyImgNodeModel<T, O>> createNodeView(int viewIndex, CopyImgNodeModel<T, O> nodeModel) {
-		// Create a node view for each view.
-		return null;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	protected boolean hasDialog() {
-		// This example node has a node dialog which is implemented in
-		// MinMaxRadiusNodeDialog.
-		return true;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	protected NodeDialogPane createNodeDialogPane() {
-		// Create the NodeDialog.
-		return new CopyImgNodeDialog<>();
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public CopyImgNodeModel<T, O> createNodeModel() {
-		// Create the NodeModel.
-		return new CopyImgNodeModel<>();
-	}
-
 }

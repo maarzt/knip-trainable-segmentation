@@ -1,15 +1,13 @@
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
 <knimeNode icon="copyImg.png" type="Manipulator">
-	<name>Copy Image</name>
+	<name>Weka Segmenter</name>
 	<shortDescription>
-		This node is a shows how an image is copied with KNIME Image Processing.
+		Node for segmentation using WEKA library to classify images.
 	</shortDescription>
 
 	<fullDescription>
 		<intro>
-			This node is a shows how an image is copied with KNIME Image Processing.
-			
-			Note: This node just creates a copy.
+			Discription: write introduction
 		</intro>
 		<tab name="Options">
 			<option name="Labeling">The image column.</option>
