@@ -48,9 +48,11 @@
  */
 package de.csbd.segmentation.node.segmenter;
 
+import org.knime.core.data.image.ImageValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
 import org.knime.knip.base.data.img.ImgPlusValue;
+import org.knime.knip.base.data.labeling.LabelingValue;
 
 import net.imglib2.type.numeric.RealType;
 
@@ -64,7 +66,9 @@ public class SegmenterNodeDialog<T extends RealType<T>> extends DefaultNodeSetti
 	@SuppressWarnings("unchecked")
 	public SegmenterNodeDialog() {
 		super();
-		addDialogComponent(new DialogComponentColumnNameSelection(SegmenterNodeModel.createColumnSelection(),
+		addDialogComponent(new DialogComponentColumnNameSelection(SegmenterNodeModel.createLabelingColumnSelection(),
 				"Labeling", 0, ImgPlusValue.class));
+		addDialogComponent(new DialogComponentColumnNameSelection(SegmenterNodeModel.createImageColumnSelection(),
+				"Image", 0, LabelingValue.class));
 	}
 }

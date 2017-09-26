@@ -69,6 +69,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.knip.base.data.img.ImgPlusCell;
 import org.knime.knip.base.data.img.ImgPlusCellFactory;
 import org.knime.knip.base.data.img.ImgPlusValue;
+import org.knime.knip.base.data.labeling.LabelingValue;
 import org.knime.knip.base.node.NodeUtils;
 import org.knime.knip.core.KNIPGateway;
 import org.scijava.log.LogService;
@@ -89,17 +90,22 @@ public class SegmenterNodeModel<T extends RealType<T>, O extends RealType<O>> ex
 	/**
 	 * Settings model of the column selection.
 	 */
-	private SettingsModelString columnSelection = createColumnSelection();
+	private SettingsModelString labelingColumn = createLabelingColumnSelection();
+	private SettingsModelString imageColumn = createImageColumnSelection();
+	
 
 	/**
 	 * Create a settings model for the column selection component.
 	 * 
 	 * @return SettingsModelString
 	 */
-	protected static SettingsModelString createColumnSelection() {
-		return new SettingsModelString("ColumnSelection", "");
+	protected static SettingsModelString createLabelingColumnSelection() {
+		return new SettingsModelString("LabelingColumn", "");
 	}
-
+	
+	protected static SettingsModelString createImageColumnSelection() {
+		return new SettingsModelString("ImageColumn", "");
+	}
 	/**
 	 * KNIP logger instance.
 	 */
@@ -120,7 +126,8 @@ public class SegmenterNodeModel<T extends RealType<T>, O extends RealType<O>> ex
 		final DataTableSpec spec = inSpecs[0];
 
 		// Check table spec if column is available.
-		NodeUtils.autoColumnSelection(spec, columnSelection, ImgPlusValue.class, this.getClass());
+		NodeUtils.autoColumnSelection(spec, labelingColumn, LabelingValue.class, this.getClass());
+		NodeUtils.autoColumnSelection(spec, imageColumn, ImgPlusValue.class, this.getClass());
 
 		// If everything looks fine, create an output table spec.
 		return new DataTableSpec[] { createDataTableSpec() };
@@ -148,7 +155,7 @@ public class SegmenterNodeModel<T extends RealType<T>, O extends RealType<O>> ex
 			exec.checkCanceled();
 
 			// Get the data cell.
-			final ImgPlusCell<T> cell = (ImgPlusCell<T>)row.getCell(data.getSpec().findColumnIndex(columnSelection.getStringValue()));
+			final ImgPlusCell<T> cell = (ImgPlusCell<T>)row.getCell(data.getSpec().findColumnIndex(labelingColumn.getStringValue()));
 			final ImgPlusCellFactory imgPlusCellFactory = new ImgPlusCellFactory(exec);
 
 			if (cell.isMissing()) {
@@ -203,7 +210,8 @@ public class SegmenterNodeModel<T extends RealType<T>, O extends RealType<O>> ex
 	 */
 	@Override
 	protected void saveSettingsTo(NodeSettingsWO settings) {
-		columnSelection.saveSettingsTo(settings);
+		labelingColumn.saveSettingsTo(settings);
+		imageColumn.saveSettingsTo(settings);
 	}
 
 	/**
@@ -211,7 +219,8 @@ public class SegmenterNodeModel<T extends RealType<T>, O extends RealType<O>> ex
 	 */
 	@Override
 	protected void validateSettings(NodeSettingsRO settings) throws InvalidSettingsException {
-		columnSelection.validateSettings(settings);
+		labelingColumn.validateSettings(settings);
+		imageColumn.validateSettings(settings);
 	}
 
 	/**
@@ -219,7 +228,8 @@ public class SegmenterNodeModel<T extends RealType<T>, O extends RealType<O>> ex
 	 */
 	@Override
 	protected void loadValidatedSettingsFrom(NodeSettingsRO settings) throws InvalidSettingsException {
-		columnSelection.loadSettingsFrom(settings);
+		labelingColumn.loadSettingsFrom(settings);
+		imageColumn.loadSettingsFrom(settings);
 	}
 
 	/**
