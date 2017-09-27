@@ -59,8 +59,8 @@ import net.imglib2.type.numeric.RealType;
  * 
  * @author Tim-Oliver Buchholz, University of Konstanz
  */
-public class SegmenterNodeFactory<T extends RealType<T>, O extends RealType<O>>
-		extends NodeFactory<SegmenterNodeModel<T, O>> {
+public class SegmenterNodeFactory<T extends RealType<T>>
+		extends NodeFactory<SegmenterNodeModel<T>> {
 
 	/**
 	 * {@inheritDoc}
@@ -75,7 +75,7 @@ public class SegmenterNodeFactory<T extends RealType<T>, O extends RealType<O>>
 	 * {@inheritDoc}
 	 */
 	@Override
-	public NodeView<SegmenterNodeModel<T, O>> createNodeView(int viewIndex, SegmenterNodeModel<T, O> nodeModel) {
+	public NodeView<SegmenterNodeModel<T>> createNodeView(int viewIndex, SegmenterNodeModel<T> nodeModel) {
 		// Create a node view for each view.
 		return null;
 	}
@@ -103,7 +103,7 @@ public class SegmenterNodeFactory<T extends RealType<T>, O extends RealType<O>>
 	 * {@inheritDoc}
 	 */
 	@Override
-	public SegmenterNodeModel<T, O> createNodeModel() {
+	public SegmenterNodeModel<T> createNodeModel() {
 		// Create the NodeModel.
 		return new SegmenterNodeModel<>();
 	}
