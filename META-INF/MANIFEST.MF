@@ -4,6 +4,7 @@ Bundle-Name: ImgLib2 Trainable Segmentation
 Bundle-SymbolicName: de.csbd.segmentation;singleton:=true
 Bundle-Version: 0.0.1.snapshot
 Bundle-Vendor: CSBD
+Eclipse-RegisterBuddy: org.knime.knip.core
 Require-Bundle: org.knime.knip.base;bundle-version="1.5.0",
  scijava-common;bundle-version="2.47.0",
  imagej-common;bundle-version="0.18.0",
@@ -12,8 +13,20 @@ Require-Bundle: org.knime.knip.base;bundle-version="1.5.0",
  org.knime.base;bundle-version="3.0.0",
  org.knime.workbench.core;bundle-version="3.0.0",
  imglib2;bundle-version="3.2.1",
- imglib2-roi;bundle-version="0.4.4"
+ imglib2-roi;bundle-version="0.4.4",
+ imglib2-algorithm;bundle-version="0.6.2",
+ imglib2-ij;bundle-version="2.0.35",
+ imglib2-algorithm-fft;bundle-version="0.1.2",
+ imglib2-algorithm-gpl;bundle-version="0.1.5",
+ com.google.gson;bundle-version="2.8.1",
+ ij;bundle-version="1.51.0",
+ org.knime.ext.weka_3.7;bundle-version="3.5.0"
 Bundle-ActivationPolicy: lazy
-Bundle-ClassPath: knip-course.jar
+Bundle-ClassPath: knip-course.jar,
+ lib/imglib2-trainable-segmentation-0.0.1-SNAPSHOT.jar,
+ lib/fastRandomForest-r49.jar,
+ lib/weka-dev-3.9.1.jar,
+ lib/bounce-0.18.jar,
+ lib/mtj-1.0.4.jar
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 
