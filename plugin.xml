@@ -13,10 +13,27 @@
    <extension
          point="org.knime.workbench.repository.nodes">
       <node
-            category-path="/community/segmentation"
+            category-path="/community/segmentation/"
             deprecated="false"
             factory-class="de.csbd.segmentation.node.segmenter.SegmenterNodeFactory">
       </node>
+      <node
+            category-path="/community/segmentation/"
+            deprecated="false"
+            factory-class="de.csbd.segmentation.node.segmenter.SegmentationTrainerNodeFactory">
+      </node>
+   </extension>
+   <extension
+         point="org.knime.core.PortType">
+      <portType
+            color="#123456"
+            hidden="false"
+            name="Weka Pixel Classifier"
+            objectClass="de.csbd.segmentation.node.segmenter.WekaSegmenterPortObject"
+            objectSerializer="de.csbd.segmentation.node.segmenter.WekaSegmenterPortObject$Serializer"
+            specClass="de.csbd.segmentation.node.segmenter.WekaSegmenterPortObjectSpec"
+            specSerializer="de.csbd.segmentation.node.segmenter.WekaSegmenterPortObjectSpec$Serializer">
+      </portType>
    </extension>
 
    

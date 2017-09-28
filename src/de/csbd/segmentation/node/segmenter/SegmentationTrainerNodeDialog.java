@@ -51,6 +51,7 @@ package de.csbd.segmentation.node.segmenter;
 import org.knime.core.data.image.ImageValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
+import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.knip.base.data.img.ImgPlusValue;
 import org.knime.knip.base.data.labeling.LabelingValue;
 
@@ -61,7 +62,7 @@ import net.imglib2.type.numeric.RealType;
  * 
  * @author Tim-Oliver Buchholz, University of Konstanz
  */
-public class SegmentationTrainerNodeDialog<T extends RealType<T>> extends DefaultNodeSettingsPane {
+public class SegmentationTrainerNodeDialog extends DefaultNodeSettingsPane {
 
 	@SuppressWarnings("unchecked")
 	public SegmentationTrainerNodeDialog() {
@@ -70,5 +71,6 @@ public class SegmentationTrainerNodeDialog<T extends RealType<T>> extends Defaul
 				"Labeling", 0, ImgPlusValue.class));
 		addDialogComponent(new DialogComponentColumnNameSelection(SegmenterNodeModel.createImageColumnSelection(),
 				"Image", 0, LabelingValue.class));
+		addDialogComponent(new FeatureSettingsDialogComponent(SegmentationTrainerNodeModel.createFeatureSettingsModel()));
 	}
 }

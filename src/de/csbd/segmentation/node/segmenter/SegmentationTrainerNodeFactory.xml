@@ -1,8 +1,8 @@
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
-<knimeNode icon="copyImg.png" type="Predictor">
-	<name>Weka Segmenter</name>
+<knimeNode icon="copyImg.png" type="Learner">
+	<name>Weka Segmenter Trainer</name>
 	<shortDescription>
-		Node for segmentation using WEKA library to classify images.
+		Training a segmenter based on pixel classification using WEKA library.
 	</shortDescription>
 
 	<fullDescription>
@@ -16,7 +16,7 @@
 	</fullDescription>
 
 	<ports>
-		<inPort index="0" name="Input Images">Input Image</inPort>
-		<outPort index="0" name="Copy">Input Image Copy.</outPort>
+		<inPort index="0" name="Images and Labels">Input image with labels</inPort>
+		<outPort index="0" name="Model">Output model for segmentation.</outPort>
 	</ports>
 </knimeNode>

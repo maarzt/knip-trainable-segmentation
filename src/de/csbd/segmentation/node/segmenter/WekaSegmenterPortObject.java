@@ -2,6 +2,7 @@ package de.csbd.segmentation.node.segmenter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.zip.ZipEntry;
 
 import javax.swing.JComponent;
 
@@ -49,6 +50,7 @@ public class WekaSegmenterPortObject extends AbstractPortObject {
     @Override
     protected void save(final PortObjectZipOutputStream out, final ExecutionMonitor exec)
         throws IOException, CanceledExecutionException {
+    	out.putNextEntry(new ZipEntry("Classifier"));
         model.store(out);
     }
 
@@ -57,6 +59,7 @@ public class WekaSegmenterPortObject extends AbstractPortObject {
         throws IOException, CanceledExecutionException {
 
         this.spec = (WekaSegmenterPortObjectSpec)spec;
+        ZipEntry zipEntry = in.getNextEntry();
         this.model = Classifier.load(KNIPGateway.ops(), in);
     }
 

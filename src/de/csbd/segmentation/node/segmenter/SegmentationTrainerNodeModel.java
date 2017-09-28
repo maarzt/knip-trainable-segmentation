@@ -51,13 +51,11 @@ package de.csbd.segmentation.node.segmenter;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
-import org.knime.core.data.DataType;
-import org.knime.core.data.MissingCell;
-import org.knime.core.data.def.DefaultRow;
-import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -67,9 +65,12 @@ import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModel;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.port.PortObject;
+import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.port.PortType;
 import org.knime.knip.base.data.img.ImgPlusCell;
-import org.knime.knip.base.data.img.ImgPlusCellFactory;
 import org.knime.knip.base.data.img.ImgPlusValue;
 import org.knime.knip.base.data.labeling.LabelingCell;
 import org.knime.knip.base.data.labeling.LabelingValue;
@@ -79,38 +80,27 @@ import org.scijava.log.LogService;
 
 import net.imagej.ImgPlus;
 import net.imagej.ops.OpService;
-import net.imglib2.Cursor;
-import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.Img;
-import net.imglib2.roi.labeling.LabelingType;
-import net.imglib2.roi.labeling.ImgLabeling;
-import net.imglib2.roi.labeling.LabelRegions;
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.ByteType;
-import net.imglib2.type.numeric.integer.IntType;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.algorithm.features.Features;
-import net.imglib2.algorithm.features.GlobalSettings;
-import net.imglib2.algorithm.features.GrayFeatureGroup;
-import net.imglib2.algorithm.features.GroupedFeatures;
-import net.imglib2.algorithm.features.SingleFeatures;
+import net.imglib2.algorithm.features.FeatureGroup;
 import net.imglib2.algorithm.features.classification.Classifier;
 import net.imglib2.algorithm.features.classification.Trainer;
+import net.imglib2.algorithm.features.gson.FeaturesGson;
+import net.imglib2.roi.labeling.LabelRegions;
 
 /**
  * MinMaxRadiusNodeModel.
  * 
  * @author Tim-Oliver Buchholz, University of Konstanz
  */
-public class SegmentationTrainerNodeModel<T extends RealType<T>> extends NodeModel {
+public class SegmentationTrainerNodeModel extends NodeModel {
 
 	/**
 	 * Settings model of the column selection.
 	 */
 	private SettingsModelString labelingColumn = createLabelingColumnSelection();
 	private SettingsModelString imageColumn = createImageColumnSelection();
+	private SettingsModelString featureSettingsAsJson = createFeatureSettingsModel();
 	
+	private List<SettingsModel> settingsModels = Arrays.asList(labelingColumn, imageColumn, featureSettingsAsJson);
 
 	/**
 	 * Create a settings model for the column selection component.
@@ -133,22 +123,22 @@ public class SegmentationTrainerNodeModel<T extends RealType<T>> extends NodeMod
 	 * Constructor of the MinMaxRadiusNodeModel.
 	 */
 	protected SegmentationTrainerNodeModel() {
-		super(1, 1);
+		super(new PortType[] { BufferedDataTable.TYPE }, new PortType[] { WekaSegmenterPortObject.TYPE });
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
-		final DataTableSpec spec = inSpecs[0];
+	protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+		final DataTableSpec spec = (DataTableSpec) inSpecs[0];
 
 		// Check table spec if column is available.
 		NodeUtils.autoColumnSelection(spec, labelingColumn, LabelingValue.class, this.getClass());
 		NodeUtils.autoColumnSelection(spec, imageColumn, ImgPlusValue.class, this.getClass());
 
 		// If everything looks fine, create an output table spec.
-		return new DataTableSpec[] { createDataTableSpec() };
+		return new PortObjectSpec[] { createPortObjectSpec() };
 	}
 
 	/**
@@ -156,67 +146,63 @@ public class SegmentationTrainerNodeModel<T extends RealType<T>> extends NodeMod
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
+	protected PortObject[] execute(final PortObject[] inData, final ExecutionContext exec)
 			throws Exception {
 		
 		// The datatable passed by the first dataport.
-		final BufferedDataTable data = inData[0];
+		final BufferedDataTable data = (BufferedDataTable) inData[0];
 
+		PortObject portObject = execute(data, exec);
+		return new PortObject[] { portObject };
+	}
+
+	private <L> PortObject execute(final BufferedDataTable data, final ExecutionContext exec) throws IOException, CanceledExecutionException {
 		// Variables to compute progress.
 		final long numRows = data.size();
 		long currentRow = 0;
 
-		// Create a container to store the output.
-		final BufferedDataContainer container = exec.createDataContainer(createDataTableSpec());
-
+		@SuppressWarnings("unchecked")
+		final LabelingCell<L> labelingCell = (LabelingCell<L>) data.iterator().next().getCell(data.getSpec().findColumnIndex(labelingColumn.getStringValue()));
+		final List<String> labels = new LabelRegions<>(labelingCell.getLabeling()).getExistingLabels().stream().map(Object::toString).collect(Collectors.toList());
+		final Classifier classifier = initClassifier(labels);
+		Trainer trainer = Trainer.of(classifier);
 		for (final DataRow row : data) {
-			// Check if execution got canceled.
 			exec.checkCanceled();
-
-			// Get the data cell.
-			executeRow(exec, data, container, row);
-
-			// Update progress indicator.
+			executeRow(exec, data, trainer, row);
 			exec.setProgress(currentRow++ / numRows);
 		}
 
-		container.close();
+		return new WekaSegmenterPortObject(classifier, createPortObjectSpec());
+	}
+	
+	private static NodeLogger logger = NodeLogger.getLogger(SegmentationTrainerNodeModel.class);
 
-		return new BufferedDataTable[] { container.getTable() };
+	private Classifier initClassifier(List<String> classNames) {
+		OpService ops = KNIPGateway.ops();
+		FeatureGroup features = initFeatureGroup();
+		return new Classifier(ops, classNames, features, Trainer.initRandomForest());
+	}
+	
+	private FeatureGroup initFeatureGroup() {
+		String stringValue = featureSettingsAsJson.getStringValue();
+		return FeaturesGson.fromJson(stringValue, KNIPGateway.ops());
 	}
 
-	private static NodeLogger logger = NodeLogger.getLogger(SegmentationTrainerNodeModel.class);
-	
 	private <T> void executeRow(final ExecutionContext exec, final BufferedDataTable data,
-			final BufferedDataContainer container, final DataRow row) throws IOException {
+			final Trainer trainer, final DataRow row) throws IOException {
 
 		@SuppressWarnings("unchecked")
 		final ImgPlusCell<?> imageCell = (ImgPlusCell<?>) row.getCell(data.getSpec().findColumnIndex(imageColumn.getStringValue()));
 		@SuppressWarnings("unchecked")
 		final LabelingCell<String> labelingCell = (LabelingCell<String>) row.getCell(data.getSpec().findColumnIndex(labelingColumn.getStringValue()));
 
-		if (imageCell.isMissing() && labelingCell.isMissing()) {
-			// If the cell is missing, insert missing cells and inform user
-			// via log.
-			container.addRowToTable(new DefaultRow(row.getKey(), new MissingCell(null), new MissingCell(null)));
-			LOGGER.warn("Missing cell in row " + row.getKey().getString() + ". Missing cell inserted.");
+		if (imageCell.isMissing() || labelingCell.isMissing()) {
+			LOGGER.warn("Missing cell in row " + row.getKey().getString());
 		} else {
 			final ImgPlus<?> image = imageCell.getImgPlus();
 			final LabelRegions<String> labeling = new LabelRegions<>(labelingCell.getLabeling());
-			final Classifier classifier = trainClassifier(image, labeling);
-			Img<ByteType> segmentation = classifier.segment(image);
-			ImgPlus<ByteType> imgPlus = new ImgPlus<>(segmentation);
-			container.addRowToTable(new DefaultRow(row.getKey(), new ImgPlusCellFactory(exec).createCell(imgPlus)));
+			trainer.trainLabeledImage(image, labeling);
 		}
-	}
-
-	private Classifier trainClassifier(Img<?> img, LabelRegions<?> labeling) {
-		GlobalSettings settings = new GlobalSettings(GlobalSettings.ImageType.GRAY_SCALE, Arrays.asList(1.0, 8.0, 16.0), 3.0);
-		OpService ops = KNIPGateway.ops();
-		net.imglib2.algorithm.features.SingleFeatures sf = new SingleFeatures(ops, settings);
-		net.imglib2.algorithm.features.GroupedFeatures gf = new GroupedFeatures(ops, settings);
-		GrayFeatureGroup features = Features.grayGroup(sf.identity(), gf.gauss());
-		return Trainer.train(ops, img, labeling, features);
 	}
 
 	/**
@@ -224,9 +210,8 @@ public class SegmentationTrainerNodeModel<T extends RealType<T>> extends NodeMod
 	 * 
 	 * @return table spec with column "Copy"
 	 */
-	private DataTableSpec createDataTableSpec() {
-		return new DataTableSpec(new String[] { "Copy"},
-				new DataType[] { ImgPlusCell.TYPE });
+	private WekaSegmenterPortObjectSpec createPortObjectSpec() {
+		return new WekaSegmenterPortObjectSpec();
 	}
 
 	/**
@@ -234,8 +219,8 @@ public class SegmentationTrainerNodeModel<T extends RealType<T>> extends NodeMod
 	 */
 	@Override
 	protected void saveSettingsTo(NodeSettingsWO settings) {
-		labelingColumn.saveSettingsTo(settings);
-		imageColumn.saveSettingsTo(settings);
+		for(SettingsModel model : settingsModels)
+			model.saveSettingsTo(settings);
 	}
 
 	/**
@@ -243,8 +228,8 @@ public class SegmentationTrainerNodeModel<T extends RealType<T>> extends NodeMod
 	 */
 	@Override
 	protected void validateSettings(NodeSettingsRO settings) throws InvalidSettingsException {
-		labelingColumn.validateSettings(settings);
-		imageColumn.validateSettings(settings);
+		for(SettingsModel model : settingsModels)
+			model.validateSettings(settings);
 	}
 
 	/**
@@ -252,8 +237,8 @@ public class SegmentationTrainerNodeModel<T extends RealType<T>> extends NodeMod
 	 */
 	@Override
 	protected void loadValidatedSettingsFrom(NodeSettingsRO settings) throws InvalidSettingsException {
-		labelingColumn.loadSettingsFrom(settings);
-		imageColumn.loadSettingsFrom(settings);
+		for(SettingsModel model : settingsModels)
+			model.loadSettingsFrom(settings);
 	}
 
 	/**
@@ -280,6 +265,10 @@ public class SegmentationTrainerNodeModel<T extends RealType<T>> extends NodeMod
 	@Override
 	protected void reset() {
 		// Ex.: Models built during execution.
+	}
+
+	public static SettingsModelString createFeatureSettingsModel() {
+		return new SettingsModelString("feature-settings", "");
 	}
 
 }

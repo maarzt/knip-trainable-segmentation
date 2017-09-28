@@ -68,6 +68,9 @@ import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.port.PortObject;
+import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.port.PortType;
 import org.knime.knip.base.data.img.ImgPlusCell;
 import org.knime.knip.base.data.img.ImgPlusCellFactory;
 import org.knime.knip.base.data.img.ImgPlusValue;
@@ -133,19 +136,19 @@ public class SegmenterNodeModel<T extends RealType<T>> extends NodeModel {
 	 * Constructor of the MinMaxRadiusNodeModel.
 	 */
 	protected SegmenterNodeModel() {
-		super(1, 1);
+		super(new PortType[] { BufferedDataTable.TYPE, WekaSegmenterPortObject.TYPE }, new PortType[] { BufferedDataTable.TYPE });
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
-		final DataTableSpec spec = inSpecs[0];
+	protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+		final DataTableSpec inTable = (DataTableSpec) inSpecs[0];
+		final WekaSegmenterPortObjectSpec inModel = (WekaSegmenterPortObjectSpec) inSpecs[1];
 
 		// Check table spec if column is available.
-		NodeUtils.autoColumnSelection(spec, labelingColumn, LabelingValue.class, this.getClass());
-		NodeUtils.autoColumnSelection(spec, imageColumn, ImgPlusValue.class, this.getClass());
+		NodeUtils.autoColumnSelection(inTable, imageColumn, ImgPlusValue.class, this.getClass());
 
 		// If everything looks fine, create an output table spec.
 		return new DataTableSpec[] { createDataTableSpec() };
@@ -156,26 +159,25 @@ public class SegmenterNodeModel<T extends RealType<T>> extends NodeModel {
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
+	protected PortObject[] execute(final PortObject[] inData, final ExecutionContext exec)
 			throws Exception {
 		
-		// The datatable passed by the first dataport.
-		final BufferedDataTable data = inData[0];
+		final BufferedDataTable data = (BufferedDataTable) inData[0];
+		final WekaSegmenterPortObject model = (WekaSegmenterPortObject) inData[1];
 
 		// Variables to compute progress.
 		final long numRows = data.size();
 		long currentRow = 0;
 
 		// Create a container to store the output.
+		Classifier classifier = model.getModel();
 		final BufferedDataContainer container = exec.createDataContainer(createDataTableSpec());
 
 		for (final DataRow row : data) {
 			// Check if execution got canceled.
 			exec.checkCanceled();
-
 			// Get the data cell.
-			executeRow(exec, data, container, row);
-
+			executeRow(exec, data, container, row, classifier);
 			// Update progress indicator.
 			exec.setProgress(currentRow++ / numRows);
 		}
@@ -188,35 +190,20 @@ public class SegmenterNodeModel<T extends RealType<T>> extends NodeModel {
 	private static NodeLogger logger = NodeLogger.getLogger(SegmenterNodeModel.class);
 	
 	private <T> void executeRow(final ExecutionContext exec, final BufferedDataTable data,
-			final BufferedDataContainer container, final DataRow row) throws IOException {
+			final BufferedDataContainer container, final DataRow row, Classifier classifier) throws IOException {
 
 		@SuppressWarnings("unchecked")
 		final ImgPlusCell<?> imageCell = (ImgPlusCell<?>) row.getCell(data.getSpec().findColumnIndex(imageColumn.getStringValue()));
-		@SuppressWarnings("unchecked")
-		final LabelingCell<String> labelingCell = (LabelingCell<String>) row.getCell(data.getSpec().findColumnIndex(labelingColumn.getStringValue()));
 
-		if (imageCell.isMissing() && labelingCell.isMissing()) {
-			// If the cell is missing, insert missing cells and inform user
-			// via log.
+		if (imageCell.isMissing()) {
 			container.addRowToTable(new DefaultRow(row.getKey(), new MissingCell(null), new MissingCell(null)));
 			LOGGER.warn("Missing cell in row " + row.getKey().getString() + ". Missing cell inserted.");
 		} else {
 			final ImgPlus<?> image = imageCell.getImgPlus();
-			final LabelRegions<String> labeling = new LabelRegions<>(labelingCell.getLabeling());
-			final Classifier classifier = trainClassifier(image, labeling);
 			Img<ByteType> segmentation = classifier.segment(image);
 			ImgPlus<ByteType> imgPlus = new ImgPlus<>(segmentation);
 			container.addRowToTable(new DefaultRow(row.getKey(), new ImgPlusCellFactory(exec).createCell(imgPlus)));
 		}
-	}
-
-	private Classifier trainClassifier(Img<?> img, LabelRegions<?> labeling) {
-		GlobalSettings settings = new GlobalSettings(GlobalSettings.ImageType.GRAY_SCALE, Arrays.asList(1.0, 8.0, 16.0), 3.0);
-		OpService ops = KNIPGateway.ops();
-		net.imglib2.algorithm.features.SingleFeatures sf = new SingleFeatures(ops, settings);
-		net.imglib2.algorithm.features.GroupedFeatures gf = new GroupedFeatures(ops, settings);
-		GrayFeatureGroup features = Features.grayGroup(sf.identity(), gf.gauss());
-		return Trainer.train(ops, img, labeling, features);
 	}
 
 	/**
